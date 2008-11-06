@@ -9,9 +9,10 @@ thin <- function(points, tol = 0.01) {
 
 simplify_rec <- function(points, keep = c(), tol = 0.01) {
   n <- nrow(points)
+  if (n <= 2) return(c(1, n))
   dist <- with(points, point_line_dist(x, y, x[1], y[1], x[n], y[n]))
   
-  if (max(dist) > tol) {
+  if (max(dist, na.rm = T) > tol) {
     furthest <- which.max(dist)
     c(
       simplify_rec(points[1:(furthest - 1), ], keep, tol),
