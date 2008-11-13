@@ -33,7 +33,11 @@ get_borders <- function(shape, area = "county", tol = 0.01) {
   coords <- llply(seq_along(polys), function(i) get_coords(unioned[i]))
 
   # Thin borders
-  thinned <- llply(coords, thin, tol = tol)
+  if (tol == 0) {
+    thinned <- llply(coords, thin, tol = tol)    
+  } else {
+    thinned <- coords
+  }
 
   # Add column to identify region
   named <- mlply(cbind(df = thinned, id = names(polys)), 

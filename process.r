@@ -6,6 +6,7 @@ library(plyr)
 
 files <- dir("shape-files", full = T, pattern = "\\.shp")
 shapes <- llply(files, readShapeSpatial, .progress = "text")
+save(shapes, file = "shapes.rdata")
 
 source("extract.r")
 
@@ -17,6 +18,10 @@ write.table(attributes, "county-attr.csv", col=T, row=F, sep=",")
 
 
 # Extract and thin 
+raw <- ldply(shapes, get_borders, tol = 0, .progress = "text")
+write.table(raw, "county-boundaries-raw.csv", col=T, row=F, sep=",")
+
+
 fine <- ldply(shapes, get_borders, tol = 0.01, .progress = "text")
 coarse <- ldply(shapes, get_borders, tol = 0.5, .progress = "text")
 
