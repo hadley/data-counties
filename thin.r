@@ -19,7 +19,6 @@ simplify_rec <- function(points, tol = 0.01) {
       simplify_rec(points[(furthest + 1):n, ], tol) + furthest 
     )
   } else {
-    c(1, n)
     c()
   }  
 }
@@ -42,23 +41,47 @@ trace <- function(df, tol) {
   thin <- c(1, simplify_rec(al2, tol), nrow(df))
   qplot(x, y, data = al2, geom="path") + 
     geom_point(size = 2) + 
-    geom_path(data = al2[thin, ], colour = alpha("grey", 0.8), size = 3) +
-    geom_point(data = al2[thin, ], colour = "white", size = 1) 
+    geom_path(data = df[thin, ], colour = alpha("grey", 0.8), size = 3) +
+    geom_point(data = df[thin, ], colour = "white", size = 1) 
 }
 
-# Precompute all distances so that we can post-select quickly
-simplify_dist <- function(points, offset = 0) {
+trace2 <- function(df, tol) {
+  thin <- df[df$tol >= tol, ]
+  
+  qplot(x, y, data = df, geom="path") + 
+    geom_point(size = 2) + 
+    geom_polygon(data = thin, colour = alpha("grey", 0.6), size = 3, fill=NA) +
+    geom_point(data = thin, colour = "white", size = 1) 
+}
+
+trace3 <- function(df, tol) {
+  thin <- df[df$tol >= tol, ]
+  
+  ggplot(thin, aes(x, y)) + 
+    geom_polygon(fill = NA, colour = "grey20", data = df) +
+    geom_point(data = subset(df, (!change) & tol == Inf), size = 2, colour = "red") + 
+    geom_point(data = subset(df, change), size = 2) + 
+    geom_polygon(fill = alpha("gray50", 0.4), colour="#3366ff")
+}
+
+# Precompute all tolerances so that we can post-select quickly
+compute_tol <- function(points, offset = 0) {
   n <- nrow(points)
   if (n <= 2) {
-    rep(0, n)
+    c()
+  } else if (n == 3) {
+    with(points,
+      point_line_dist(x[2], y[2], x[1], y[1], x[3], y[3]))
   } else {
-    dist <- with(points, point_line_dist(x, y, x[1], y[1], x[n], y[n]))
+    dist <- with(points, 
+      point_line_dist(x[2:(n-1)], y[2:(n-1)], x[1], y[1], x[n], y[n])
+    )
   
     furthest <- which.max(dist)
     c(
-      simplify_dist(points[1:(furthest - 1), ], offset),
+      compute_tol(points[1:(furthest + 1), ], offset),
       dist[furthest],
-      simplify_dist(points[(furthest + 1):n, ], furthest + offset)
+      compute_tol(points[(furthest + 1):n, ], furthest + offset)
     )
   }
 }
@@ -66,4 +89,4 @@ simplify_dist <- function(points, offset = 0) {
 # al2 <- subset(raw, id == "02.020")
 # qplot(x, y, data=al2)
 # simplify_dist(al2)
-# al2$eps <- simplify_dist(al2)
+# al2$tol <- simplify_dist(al2)
