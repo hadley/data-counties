@@ -1,30 +1,38 @@
 library(ggplot2)
 source("thin-better.r")
-raw <- read.csv("county-boundaries-raw.csv")
-raw$long <- round_any(raw$long, 0.001)
-raw$lat <- round_any(raw$lat, 0.001)
-raw <- unique(raw)
-raw$order <- seq_len(nrow(raw))
-raw$hash <- paste(raw$long, raw$lat)
 
-mn <- subset(raw, substr(id, 0, 2) == "27")
+if (!file.exists("mn.rdata")) {
+  raw <- read.csv("county-boundaries-raw.csv")
+  raw$long <- round_any(raw$long, 0.001)
+  raw$lat <- round_any(raw$lat, 0.001)
+  raw$order <- NULL
+  raw <- unique(raw)
+
+  raw$order <- seq_len(nrow(raw))
+  raw$hash <- paste(raw$long, raw$lat)
+
+  mn <- subset(raw, substr(id, 0, 2) == "27")
+  save(mn, file = "mn.rdata")  
+} else {
+  load("mn.rdata")  
+}
 
 # Find out which points belong to which ids
-neighbours <- ddply(mn, .(hash), function(df) length(unique(df$id)))
+neighbours <- ddply(mn, .(hash), nrow)
 names(neighbours) <- c("hash", "count")
 
 # Identify points on the boundary where the neighbour changes
 mn <- merge(mn, neighbours, by = "hash")
 mn <- mn[order(mn$order), ]
-mn <- ddply(mn, .(id), transform, 
-  change = diff(c(count[length(count)], count)) > 0,
+mn <- ddply(mn, .(group), transform, 
+  change = diff(c(count[length(count)], count)) > 0
 )
 
 midrng <- function(x) mean(range(x))
-centres <- ddply(mn, .(id), colwise(midrng, .(x, y)))
+centres <- ddply(mn, .(id), colwise(midrng, .(long, lat)))
 
-ggplot(mn, aes(x, y)) + 
-  geom_polygon(aes(group = id), fill = NA, colour = "grey50") +
+ggplot(mn, aes(long, lat)) + 
+  geom_polygon(aes(group = group), fill = NA, colour = "grey50") +
   geom_point(aes(colour = factor(count)), subset(mn, change)) + 
   geom_text(aes(label = id), data = centres, size = 2)
 
