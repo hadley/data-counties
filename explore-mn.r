@@ -37,23 +37,18 @@ ggplot(mn, aes(long, lat)) +
   geom_text(aes(label = id), data = centres, size = 2)
 
 # Rotate counties to ensure that each polygon starts on an intersection
-co2 <- ddply(mn, .(id), rotate)
+mn2 <- ddply(mn, .(id), rotate)
 # Check that it worked - every id should have a change point 
 # at the start and the end
-ddply(co2, .(id), function(df) df$change[c(1, nrow(df))])
+ddply(mn2, .(id), function(df) df$change[c(1, nrow(df))])
 
+mn3 <- ddply(mn2, .(id), thin_poly, .progress = "text")
+qplot(tol, data = mn2, binwidth = 0.01)
+qplot(log(tol), data = mn2, binwidth = 0.5)
 
-co3 <- ddply(co2, .(id), thin_poly, .progress = "text")
-trace3(co2, 0.1) + aes(group = id)
-
-
-zoom <- subset(mn, x > -105.12 & x < -105 & y > 39.5 & y < 39.8)
-zoom2 <- subset(co2, id %in% unique(zoom$id))
-zoom2$x <- round_any(zoom2$x, 0.001)
-zoom2$y <- round_any(zoom2$y, 0.001)
-
-qplot(x, y, data = zoom2, geom = "polygon", group = id, fill = id) + scale_fill_hue(alpha = 0.4) + geom_point(aes(colour = factor(freq), shape = change), subset(zoom2, change | freq > 2))
-
+ggplot(subset(mn3, tol > 0.01), aes(long, lat)) + 
+  geom_polygon(aes(group = group), fill = "grey50", colour = "white") + 
+  geom_polygon(aes(group = group), fill = NA, colour = alpha("red", 0.5), data = mn3)
 
 # Explore incorrect change detection -----------------------------------------
 
@@ -67,3 +62,5 @@ last_plot() + xlim(-93.55, -93.50) + ylim(44.54, 44.55)
 
 z2 <- subset(mn, id %in% c("27.079", "27.131", "27.139"))
 ggplot(z1, aes(x, y)) + geom_point(aes(colour = id, size = factor(count), shape=change))
+
+# 27.031, 27.075

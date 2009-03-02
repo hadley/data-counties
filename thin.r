@@ -1,11 +1,5 @@
 # Implementation of the Douglas-Peucker algorithm for line thinning
 # http://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm
-thin <- function(points, tol = 0.01) {
-  points <- unique(points)
-  
-  points[simplify_rec(points, tol = tol), ]
-}
-
 simplify_rec <- function(points, tol = 0.01) {
   n <- nrow(points)
   if (n <= 2) return() # c(1, n))
@@ -36,10 +30,10 @@ compute_tol <- function(points, offset = 0) {
     c()
   } else if (n == 3) {
     with(points,
-      point_line_dist(x[2], y[2], x[1], y[1], x[3], y[3]))
+      point_line_dist(long[2], lat[2], long[1], lat[1], long[3], lat[3]))
   } else {
     dist <- with(points, 
-      point_line_dist(x[2:(n-1)], y[2:(n-1)], x[1], y[1], x[n], y[n])
+      point_line_dist(long[2:(n-1)], lat[2:(n-1)], long[1], lat[1], long[n], lat[n])
     )
   
     furthest <- which.max(dist)
@@ -51,8 +45,3 @@ compute_tol <- function(points, offset = 0) {
     )
   }
 }
-
-# al2 <- subset(raw, id == "02.020")
-# qplot(x, y, data=al2)
-# simplify_dist(al2)
-# al2$tol <- simplify_dist(al2)

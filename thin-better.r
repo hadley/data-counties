@@ -8,10 +8,24 @@ rotate <- function(df) {
   rbind(df[first:n, ], df[1:first, ])
 }
 
+
+thin_poly <- function(df) {
+  breaks <- which(df$change)
+  pieces <- as.data.frame(embed(breaks, 2)[, c(2, 1), drop = FALSE])
+  colnames(pieces) <- c("start", "end")
+  pieces$last <- rep(c(F, T), c(nrow(pieces) - 1, 1))
+
+  mdply(pieces, thin_piece, data = df)  
+}
+
+
 # Given a data frame representing a region, and the starting and 
 # end pointing of a single polyline, augment that line with dp tolerances
 thin_piece <- function(data, start, end, last = FALSE) {
   sub <- data[start:end, ]
+  # Remove any duplicated locations
+  sub <- sub[!duplicated(sub[c("long", "lat")]), ]
+
   if (nrow(sub) < 3) {
     sub$tol <- Inf
     return(sub)
@@ -27,15 +41,5 @@ thin_piece <- function(data, start, end, last = FALSE) {
   } else {
     sub
   }
-}
-
-thin_poly <- function(df) {
-  breaks <- c(1, which(df$change), nrow(df))
-  pieces <- as.data.frame(embed(breaks, 2)[, c(2, 1)])
-  browser()
-  colnames(pieces) <- c("start", "end")
-  pieces$last <- rep(c(F, T), c(nrow(pieces) - 1, 1))
-
-  mdply(pieces, thin_piece, data = df)  
 }
 
