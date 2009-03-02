@@ -1,31 +1,15 @@
-library(ggplot2)
 source("thin.r")
-raw <- read.csv("county-boundaries-raw.csv", 
-  colClasses = c("numeric", "numeric", "character"))
-raw <- unique(raw)
-raw$order <- seq_len(nrow(raw))
-raw$hash <- paste(raw$x, raw$y)
 
+# Rotate starting & ending points so that they coincide with a 
+# neighbour change
+rotate <- function(df) {
+  n <- nrow(df)
+  first <- which.max(df$change)
+  rbind(df[first:n, ], df[1:first, ])
+}
 
-# Break each region polygon up into a set of polylines
-# Thin each polyline
-# Join back together
-
-co <- subset(raw, substr(id, 0, 2) == "08")
-co <- unique(co)
-co$order <- seq_len(nrow(co))
-counts <- as.data.frame(table(co$hash))
-names(counts) <- c("hash", "freq")
-co <- merge(co, counts, by = "hash", sort = FALSE)
-co <- co[order(co$order), ]
-
-co <- ddply(co, .(id), transform, change = c(F, diff(freq) > 0))
-
-qplot(x, y, data = co, geom = "path", group = id) + 
-  geom_point(aes(colour = factor(freq)), data = subset(co, change))
-
-
-
+# Given a data frame representing a region, and the starting and 
+# end pointing of a single polyline, augment that line with dp tolerances
 thin_piece <- function(data, start, end, last = FALSE) {
   sub <- data[start:end, ]
   if (nrow(sub) < 3) {
@@ -48,11 +32,10 @@ thin_piece <- function(data, start, end, last = FALSE) {
 thin_poly <- function(df) {
   breaks <- c(1, which(df$change), nrow(df))
   pieces <- as.data.frame(embed(breaks, 2)[, c(2, 1)])
+  browser()
   colnames(pieces) <- c("start", "end")
   pieces$last <- rep(c(F, T), c(nrow(pieces) - 1, 1))
 
   mdply(pieces, thin_piece, data = df)  
 }
 
-co2 <- ddply(co, .(id), thin_poly)
-trace3(co2, 0.3) + aes(group = id)
