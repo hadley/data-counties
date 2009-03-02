@@ -1,12 +1,11 @@
 library(ggplot2)
 source("thin-better.r")
-raw <- read.csv("county-boundaries-raw.csv", 
-  colClasses = c("numeric", "numeric", "character"))
-raw$x <- round_any(raw$x, 0.001)
-raw$y <- round_any(raw$y, 0.001)
+raw <- read.csv("county-boundaries-raw.csv")
+raw$long <- round_any(raw$long, 0.001)
+raw$lat <- round_any(raw$lat, 0.001)
 raw <- unique(raw)
 raw$order <- seq_len(nrow(raw))
-raw$hash <- paste(raw$x, raw$y)
+raw$hash <- paste(raw$long, raw$lat)
 
 mn <- subset(raw, substr(id, 0, 2) == "27")
 
