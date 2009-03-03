@@ -42,10 +42,7 @@ ggplot(thinned, aes(long, lat, group = group)) +
   geom_polygon(fill = "grey80", colour = "white")
 
 # Explore removing polygons with small areas.
-poly_area <- function(x, y) {
-  n <- length(x)
-  abs(1/2 * sum(x[-n] * y[-1] - x[-1] * y[n]))
-}
+source("poly.r")
 areas <- ddply(thinned, .(group), 
   function(df) c(area = with(df, poly_area(long,lat))))
 

@@ -16,8 +16,12 @@ add_tol <- function(df) {
   
   df <- merge(df, neighbours, by = "hash")
   df <- df[order(df$order), ]
+  
+  # A point is a change point if the count is:
+  #  * one greater than the surrounding points (neighbour has joined)
+  #  * two or more (must be a corner)
   df <- ddply(df, .(group), transform, 
-    change = diff(c(count[length(count)], count)) > 0
+    change = diff(c(count[length(count)], count)) > 0  | count > 2
   )
   df <- ddply(df, .(group), rotate)
 

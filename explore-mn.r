@@ -25,7 +25,7 @@ mn <- ddply(mn, .(group), transform,
   change = diff(c(count[length(count)], count)) > 0
 )
 
-midrng <- function(x) mean(range(x))
+source("poly.r")
 centres <- ddply(mn, .(id), colwise(midrng, .(long, lat)))
 
 ggplot(mn, aes(long, lat)) + 
