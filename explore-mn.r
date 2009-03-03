@@ -8,9 +8,6 @@ if (!file.exists("mn.rdata")) {
   raw$order <- NULL
   raw <- unique(raw)
 
-  raw$order <- seq_len(nrow(raw))
-  raw$hash <- paste(raw$long, raw$lat)
-
   mn <- subset(raw, substr(id, 0, 2) == "27")
   save(mn, file = "mn.rdata")  
 } else {
