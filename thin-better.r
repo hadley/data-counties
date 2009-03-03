@@ -8,9 +8,28 @@ rotate <- function(df) {
   rbind(df[first:n, ], df[1:first, ])
 }
 
+add_tol <- function(df) {
+  df$hash <- paste(df$long, df$lat)
+  if (is.null(df$order)) df$order <- 1:nrow(df)
+  neighbours <- ddply(df, .(hash), nrow)
+  names(neighbours) <- c("hash", "count")
+  
+  df <- merge(df, neighbours, by = "hash")
+  df <- df[order(df$order), ]
+  df <- ddply(df, .(group), transform, 
+    change = diff(c(count[length(count)], count)) > 0
+  )
+  df <- ddply(df, .(group), rotate)
+
+  df <- ddply(df, .(group), thin_poly, .progress = "text")
+  df$hash <- NULL
+
+  df  
+}
+
 
 thin_poly <- function(df) {
-  breaks <- which(df$change)
+  breaks <- unique(c(1, which(df$change), nrow(df)))
   pieces <- as.data.frame(embed(breaks, 2)[, c(2, 1), drop = FALSE])
   colnames(pieces) <- c("start", "end")
   pieces$last <- rep(c(F, T), c(nrow(pieces) - 1, 1))
