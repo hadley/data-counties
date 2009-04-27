@@ -4,12 +4,14 @@
 library(maptools)
 library(plyr)
 
-# files <- dir("shape-files", full = T, pattern = "\\.shp")
-# shapes <- llply(files, readShapeSpatial, .progress = "text")
-# save(shapes, file = "shapes.rdata")
-
-load("shapes.rdata")
-l(ggplot)
+if (!file.exists("shapes.rdata")) {
+  files <- dir("shape-files", full = T, pattern = "\\.shp")
+  shapes <- llply(files, readShapeSpatial, .progress = "text")
+  save(shapes, file = "shapes.rdata")  
+} else {
+  load("shapes.rdata")
+  
+}
 
 get_attributes <- function(shape) {
   attr <- as.data.frame(shape)
@@ -23,6 +25,7 @@ attributes <- ldply(shapes, get_attributes, .progress = "text")
 attributes <- unique(attributes[, c("state", "county", "name", "area", "perimeter")])
 write.table(attributes, "county-attr.csv", col=T, row=F, sep=",")
 
-# Extract
-raw <- ldply(shapes, fortify, region = c("STATE", "COUNTY"), .progress = "text")
+# Extract boundaries
+raw <- ldply(shapes, fortify, region = c("STATE", "COUNTY"), 
+  .progress = "text")
 write.table(raw, "county-boundaries-raw.csv", col=T, row=F, sep=",")
